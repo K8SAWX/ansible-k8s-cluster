@@ -60,9 +60,10 @@
     - containerd.io
 
 - name: Add an apt signing key for Kubernetes
-  apt_key:
-    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-    state: present
+  become: yes
+  shell: wget https://packages.cloud.google.com/apt/doc/apt-key.gpg && apt-key add apt-key.gpg
+
+
 
 - name: Adding apt repository for Kubernetes
   apt_repository:
