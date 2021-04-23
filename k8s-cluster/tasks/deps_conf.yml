@@ -2,6 +2,9 @@
 - name: create the 'k8s' user
   user: name=k8s append=yes state=present createhome=yes shell=/bin/bash
 
+- name: Cluster info
+  debug:
+    msg: "{{ inventory_hostname }}"
 - name: allow 'k8s' to have passwordless sudo
   lineinfile:
     dest: /etc/sudoers
