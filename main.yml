@@ -1,0 +1,6 @@
+---
+- name: use k8s-cluster
+  hosts: all
+  become: true
+  roles:
+    - role: k8s-cluster
