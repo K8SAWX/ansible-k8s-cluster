@@ -1,0 +1,113 @@
+---
+- name: initialize the cluster
+  shell: kubeadm init --pod-network-cidr=10.244.0.0/16  --node-name k8s-master --apiserver-cert-extra-sans=10.0.0.0 >> cluster_initialized.txt
+  args:
+    chdir: $HOME
+    creates: cluster_initialized.txt
+
+- name: create .kube directory
+  become: yes
+  become_user: k8s
+  file:
+    path: $HOME/.kube
+    state: directory
+    mode: 0755
+
+- name: create config directory
+  become: yes
+  become_user: k8s
+  file:
+    path: $HOME/cluster_config
+    state: directory
+    mode: 0755
+
+- name: copy admin.conf to user's kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/k8s/.kube/config
+    remote_src: yes
+    owner: k8s
+
+- name: install Pod network
+  become: yes
+  become_user: k8s
+  shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.txt
+  args:
+    chdir: $HOME
+    creates: pod_network_setup.txt
+
+- name: Install Hetzner Controller Manager
+  become: yes
+  become_user: k8s
+  shell: kubectl apply -f https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/master/deploy/ccm-networks.yaml
+
+- name: Copy k8s hetzner secret token
+  template:
+    src: templates/k8s-secret-cluster.yml
+    dest: $HOME/cluster_config/k8s-secret-cluster.yml
+  become_user: k8s
+
+# - name: Copy k8s metallb
+#   template:
+#     src: templates/metallb.yml
+#     dest: $HOME/cluster_config/metallb.yml
+#   become_user: k8s
+
+- name: Create inside k8s cluster the hetzner secret token
+  become: yes
+  become_user: k8s
+  shell: kubectl apply -f $HOME/cluster_config/k8s-secret-cluster.yml
+
+
+- name: Patch daemonset for kube-flannel
+  become: yes
+  become_user: k8s
+  shell: kubectl -n kube-system patch daemonset kube-flannel-ds --type json -p '[{"op":"add","path":"/spec/template/spec/tolerations/-","value":{"key":"node.cloudprovider.kubernetes.io/uninitialized","value":"true","effect":"NoSchedule"}}]'
+
+- name: Patch deployment for coredns
+  become: yes
+  become_user: k8s
+  shell: kubectl -n kube-system patch deployment coredns --type json -p '[{"op":"add","path":"/spec/template/spec/tolerations/-","value":{"key":"node.cloudprovider.kubernetes.io/uninitialized","value":"true","effect":"NoSchedule"}}]'
+
+- name: Hetzner Cloud Container Storage Interface csidriver
+  become: yes
+  become_user: k8s
+  shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/csi-api/release-1.14/pkg/crd/manifests/csidriver.yaml
+
+- name: Hetzner Cloud Container Storage Interface csinodeinfo
+  become: yes
+  become_user: k8s
+  shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/csi-api/release-1.14/pkg/crd/manifests/csinodeinfo.yaml
+
+- name: Hetzner Cloud Container Storage Interface hcloud-csi 
+  become: yes
+  become_user: k8s
+  shell: kubectl apply -f https://raw.githubusercontent.com/hetznercloud/csi-driver/master/deploy/kubernetes/hcloud-csi.yml
+
+
+# - name: Install MetalLB
+#   become: yes
+#   become_user: k8s
+#   shell: kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.8.3/manifests/metallb.yaml
+
+
+- name: Install hcloud fip controller deployment
+  become: yes
+  become_user: k8s
+  shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.44.0/deploy/static/provider/cloud/deploy.yaml
+
+- name: Copy ingress config file
+  template:
+    src: templates/ingress_config.yml
+    dest: $HOME/cluster_config/ingress_config.yml
+  become_user: k8s
+
+- name: Apply ingress config
+  become: yes
+  become_user: k8s
+  shell: kubectl apply -f $HOME/cluster_config/ingress_config.yml
+
+# - name: Apply fip config
+#   become: yes
+#   become_user: k8s
+#   shell: kubectl apply -f $HOME/cluster_config/fip_config.yml
