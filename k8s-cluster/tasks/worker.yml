@@ -10,18 +10,9 @@
   when: inventory_hostname in groups['k8s-masters']
       
 
-
-# - name: join cluster
-#   shell: "{{ hostvars['k8s-master'].join_command }} >> node_joined.txt"
-#   args:
-#     chdir: $HOME
-#     creates: node_joined.txt
-#   when: inventory_hostname  in groups['workers']
-
-- name: Show hostvars
-  debug:
-    msg: "{{hostvars}}"
-
-- name: Show facts
-  debug:
-    msg: "{{ join_command }}"
+- name: join cluster
+  shell: "{{ join_command }} >> node_joined.txt"
+  args:
+    chdir: $HOME
+    creates: node_joined.txt
+  when: inventory_hostname in groups['k8s-nodes']
