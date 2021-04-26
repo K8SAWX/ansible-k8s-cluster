@@ -1,15 +1,15 @@
 ---
 
-# - name: Setup all masters and nodes
-#   include_role:
-#     name: k8s-cluster
-#     tasks_from: deps_conf
+- name: Setup all masters and nodes
+  include_role:
+    name: k8s-cluster
+    tasks_from: deps_conf
 
-# - name: Setup masters
-#   include_role:
-#     name: k8s-cluster
-#     tasks_from: master
-#   when: inventory_hostname in groups['k8s-masters']
+- name: Setup masters
+  include_role:
+    name: k8s-cluster
+    tasks_from: master
+  when: inventory_hostname in groups['k8s-masters']
 
 - name: Join nodes
   include_role:

@@ -84,18 +84,6 @@
   become_user: k8s
   shell: kubectl apply -f https://raw.githubusercontent.com/hetznercloud/csi-driver/master/deploy/kubernetes/hcloud-csi.yml
 
-
-# - name: Install MetalLB
-#   become: yes
-#   become_user: k8s
-#   shell: kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.8.3/manifests/metallb.yaml
-
-
-- name: Install hcloud fip controller deployment
-  become: yes
-  become_user: k8s
-  shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.44.0/deploy/static/provider/cloud/deploy.yaml
-
 - name: Copy ingress config file
   template:
     src: templates/ingress_config.yml
@@ -107,7 +95,3 @@
   become_user: k8s
   shell: kubectl apply -f $HOME/cluster_config/ingress_config.yml
 
-# - name: Apply fip config
-#   become: yes
-#   become_user: k8s
-#   shell: kubectl apply -f $HOME/cluster_config/fip_config.yml

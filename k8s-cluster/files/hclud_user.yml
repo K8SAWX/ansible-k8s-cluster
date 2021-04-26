@@ -1,0 +1,7 @@
+#cloud-config
+users:
+  - name: k8s
+    hashed_passwd: '$6$rounds=4096$5tCF9.BY$Rs/jDOJ06tLrXBkUlgwr2p/Y0oWHFFLMGn7pupcqowO1C5s81umBqjLEwxbht.Gvp5v7UPAuykA6uvb5RVAQl1'
+    lock_passwd: false
+    sudo: ['ALL=(ALL:ALL) ALL']
+    shell: /bin/bash
