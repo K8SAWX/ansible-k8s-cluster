@@ -4,9 +4,15 @@
   register: join_command_raw
   when: inventory_hostname in groups['k8s-masters']
 
+- name: "Add K8S Join command to dummy host"
+  add_host:
+    name:   "K8S_JOIN_COMMAND"
+    token:  "{{ join_command_raw.stdout }}"
+  when: inventory_hostname in groups['k8s-masters']
+
 - name: Debug
   debug:
-    msg: "{{ join_command_raw }}"
+    msg: "{{ hostvars['K8S_JOIN_COMMAND']['token'] }}"
   # when: inventory_hostname in groups['k8s-nodes']
 
 # - name: join cluster
