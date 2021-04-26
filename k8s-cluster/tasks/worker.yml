@@ -4,15 +4,14 @@
   register: join_command_raw
   when: inventory_hostname in groups['k8s-masters']
 
-- name: set join command
-  set_fact:
-    join_command: "{{ join_command_raw.stdout_lines[0] }}"
-  when: inventory_hostname in groups['k8s-masters']
-      
-
-- name: join cluster
-  shell: "{{ join_command }} >> node_joined.txt"
-  args:
-    chdir: $HOME
-    creates: node_joined.txt
+- name: Debug
+  debug:
+    msg: "{{ join_command_raw }}"
   when: inventory_hostname in groups['k8s-nodes']
+
+# - name: join cluster
+#   shell: "{{ join_command }} >> node_joined.txt"
+#   args:
+#     chdir: $HOME
+#     creates: node_joined.txt
+#   when: inventory_hostname in groups['k8s-nodes']
