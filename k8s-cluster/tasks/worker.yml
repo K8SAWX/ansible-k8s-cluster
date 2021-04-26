@@ -7,7 +7,7 @@
 - name: Debug
   debug:
     msg: "{{ join_command_raw }}"
-  when: inventory_hostname in groups['k8s-nodes']
+  # when: inventory_hostname in groups['k8s-nodes']
 
 # - name: join cluster
 #   shell: "{{ join_command }} >> node_joined.txt"
