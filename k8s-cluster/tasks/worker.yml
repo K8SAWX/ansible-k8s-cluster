@@ -10,14 +10,9 @@
     token:  "{{ join_command_raw.stdout }}"
   when: inventory_hostname in groups['k8s-masters']
 
-- name: Debug
-  debug:
-    msg: "{{ hostvars['K8S_JOIN_COMMAND']['token'] }}"
-  # when: inventory_hostname in groups['k8s-nodes']
-
-# - name: join cluster
-#   shell: "{{ join_command }} >> node_joined.txt"
-#   args:
-#     chdir: $HOME
-#     creates: node_joined.txt
-#   when: inventory_hostname in groups['k8s-nodes']
+- name: Join node to cluster
+  shell: "{{ hostvars['K8S_JOIN_COMMAND']['token'] }} >> node_joined.txt"
+  args:
+    chdir: $HOME
+    creates: node_joined.txt
+  when: inventory_hostname in groups['k8s-nodes']
