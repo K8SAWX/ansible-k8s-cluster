@@ -4,7 +4,7 @@ users:
   # You can change the hashed_password using mkpasswd --method=SHA-512 --rounds=4096 command
   # Note: mkpasswd is provided by whois package
   # You alse can use a ssh key
-  - name: k8s
+  - name: ansibleawxuser
     hashed_passwd: '$6$rounds=4096$5tCF9.BY$Rs/jDOJ06tLrXBkUlgwr2p/Y0oWHFFLMGn7pupcqowO1C5s81umBqjLEwxbht.Gvp5v7UPAuykA6uvb5RVAQl1'
     lock_passwd: false
     sudo: ['ALL=(ALL:ALL) ALL']

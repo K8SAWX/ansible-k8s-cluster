@@ -3,16 +3,22 @@
 - name: Setup all masters and nodes
   include_role:
     name: k8s-cluster
+    tasks_from: checks
+
+- name: Setup all masters and nodes
+  include_role:
+    name: k8s-cluster
     tasks_from: deps_conf
+  when: user_creation.changed == true
 
 - name: Setup masters
   include_role:
     name: k8s-cluster
     tasks_from: master
-  when: inventory_hostname in groups['k8s-masters']
+  when: inventory_hostname in groups['k8s-masters'] and user_creation.changed == true
 
 - name: Join nodes
   include_role:
     name: k8s-cluster
     tasks_from: worker
-
+  when: user_creation.changed == true

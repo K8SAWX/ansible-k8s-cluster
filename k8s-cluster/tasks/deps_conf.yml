@@ -1,10 +1,4 @@
 ---
-- name: create the 'k8s' user
-  user: name=k8s append=yes state=present createhome=yes shell=/bin/bash
-
-- name: iterate through members of group
-  debug:
-    msg: "{{ groups }}"
 
 - name: allow 'k8s' to have passwordless sudo
   lineinfile:
@@ -109,15 +103,7 @@
     state: directory
     mode: '0755'
 
-# - name: Creating a file with static network content
-#   copy:
-#     dest: "/etc/network/interfaces.d/60-floating-ip.cfg"
-#     content: |
-#       auto eth0:1
-#       iface eth0:1 inet static
-#         address {{ float_ip_addr }}
-#         netmask 32
-    
+   
 - name: Creating a file with content
   copy:
     dest: "/etc/systemd/system/kubelet.service.d/20-hetzner-cloud.conf"

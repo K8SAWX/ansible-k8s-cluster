@@ -1,0 +1,9 @@
+---
+
+- name: create the 'k8s' user
+  user: name=k8s append=yes state=present createhome=yes shell=/bin/bash
+  register: user_creation
+
+- name: Save fact
+  set_fact: 
+    user_exist: "{{user_creation}}"
