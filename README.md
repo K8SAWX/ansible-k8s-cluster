@@ -21,8 +21,8 @@ The servers should be grouped, for example
 ###### IMPORTANT
 When you create the servers, you need to select the user data option and paste the [yaml content](https://github.com/eugeni9872/ansible-k8s-cluster/blob/main/k8s-cluster/files/hcloud_user.yml) to create an user with password
 
-> You can change the hashed_password using mkpasswd --method=SHA-512 --rounds=4096 command \n\n
-> mkpasswd is provided by whois package
+> You can change the hashed_password using mkpasswd --method=SHA-512 --rounds=4096 command\
+> mkpasswd is provided by whois package \
 > You also can use a public ssh key
 
 Also you need a token with read & write permissions that you can create following Project Name -> Security -> API Tokens
