@@ -1,38 +1,51 @@
-Role Name
+k8s-hetzner-cluster
 =========
 
-A brief description of the role goes here.
+A ansible role to create a kubernetes cluster in hetzner cloud provider
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+Basically you need minimum of two  Ubuntu Servers(**CX11**) with version **20.04** and a private network to connect the cluster internally.
+
+The servers should be grouped, for example
+```
+  [k8s-masters]
+  k8s-master ansible_host=125.111.126.68 ansible_user=k8s
+
+  [k8s-workers]
+  k8s-node1 ansible_host=135.181.107.190 ansible_user=k8s
+  k8s-node2 ansible_host=133.121.127.110 ansible_user=k8s
+```
+
+###### IMPORTANT
+When you create the servers, you need to select the user data option and paste the [yaml content](https://github.com/eugeni9872/ansible-k8s-cluster/blob/main/k8s-cluster/files/hcloud_user.yml) to create the an user with password-
+
+> You can change the hashed password with following [this](https://cloudinit.readthedocs.io/en/latest/topics/examples.html) guide
+
+Also you need a token with read & write permissions that you can create following Project Name -> Security -> API Tokens
+
 
 Role Variables
 --------------
+You need to provide the following vars 
+  1. hcloud_token: The hetzner api token
+  2. hcloud_private_network: The private network name or id
+  3. float_ip_addr: The float ip allow you to access with a public IP to your ingress. If is not defined, loadbalancer config will be used by default.
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
-
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
 
 Example Playbook
 ----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
+      hosts: all
+      become: true
       roles:
-         - { role: username.rolename, x: 42 }
+        - {role: k8s-cluster, hcloud_token:'Hetnzer token', hcloud_private_network:'private network name/ID', etc... }
+
 
 License
 -------
 
 BSD
 
-Author Information
+Eugeni Bejan
 ------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
