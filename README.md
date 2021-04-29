@@ -19,7 +19,7 @@ The servers should be grouped, for example
 ```
 
 ###### IMPORTANT
-When you create the servers, you need to select the user data option and paste the [yaml content](https://github.com/eugeni9872/ansible-k8s-cluster/blob/main/k8s-cluster/files/hcloud_user.yml) to create the an user with password-
+When you create the servers, you need to select the user data option and paste the [yaml content](https://github.com/eugeni9872/ansible-k8s-cluster/blob/main/k8s-cluster/files/hcloud_user.yml) to create an user with password
 
 > You can change the hashed password with following [this](https://cloudinit.readthedocs.io/en/latest/topics/examples.html) guide
 
