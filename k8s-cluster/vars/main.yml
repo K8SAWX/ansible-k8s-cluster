@@ -1,2 +1,5 @@
 ---
 # vars file for k8s-cluster
+hcloud_token: null
+hcloud_private_network: null
+float_ip_addr: null

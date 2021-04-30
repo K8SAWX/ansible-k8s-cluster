@@ -1,5 +1,3 @@
 ---
 # defaults file for k8s-cluster
-hcloud_token: 'DcuVYP6EmOP1Tmc5tyc6e1Pj3t61s20t67XLwRzJyvXi0p0LPvqMd8sAiaImqhiW'
-hcloud_private_network: 'k8s-network'
-# float_ip_addr: '116.202.186.172'
+hcloud_api_url: "https://api.hetzner.cloud/v1/"
