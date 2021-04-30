@@ -1,9 +1,49 @@
 ---
+- name: Create internal vars
+  set_fact:
+    remote_hcloud_networks: []
+    
+- fail: msg="The hcloud_token var is not defined"
+  failed_when: hcloud_token == None
 
-- name: create the 'k8s' user
-  user: name=k8s append=yes state=present createhome=yes shell=/bin/bash
-  register: user_creation
+- fail: msg="The hcloud_private_network var is not defined"
+  failed_when: hcloud_private_network == None
 
-- name: Save fact
-  set_fact: 
-    user_exist: "{{user_creation}}"
+- name: Make a test request to hetzner API to check if the token is valid
+  uri:
+    url: "{{ hcloud_api_url }}servers"
+    method: GET
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{ hcloud_token }}"
+  register: hcloud_token_check_request
+  ignore_errors: True
+  no_log: True
+  
+- name: Check the request status
+  fail: 
+    msg: "The hetzner cloud is not valid"
+  failed_when: hcloud_token_check_request.status == 401
+
+- name: Get the networks from hetzner API
+  uri:
+    url: "{{ hcloud_api_url }}networks"
+    method: GET
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{ hcloud_token }}"
+  register: hcloud_network_check_request
+
+
+- name: Filter the networks
+  set_fact:
+    remote_hcloud_networks: "{{ final_var | default([]) + [item.name] }} "
+  with_items:
+  - "{{ hcloud_network_check_request.json.networks }}"
+  no_log: True
+    
+- name: Check if the hetnzer private network is valid
+  fail:
+    msg: "The {{hcloud_private_network}} is not created in hetnzer cloud"
+  failed_when: hcloud_private_network not in remote_hcloud_networks
+    
