@@ -47,8 +47,14 @@
     dest: $HOME/cluster_config/k8s-secret-cluster.yml
   become_user: k8s
 
-- name: Install helm
-  command: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh
+- name: Install helm[1.0]
+  command: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 
+
+- name: Install helm[1.1]
+  command: chmod 700 get_helm.sh
+
+- name: Install helm[1.2]
+  command: ./get_helm.sh
 
 - name: Create inside k8s cluster the hetzner secret token
   become: yes
