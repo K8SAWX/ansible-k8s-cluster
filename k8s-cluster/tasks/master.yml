@@ -81,6 +81,7 @@
 - name: Step[1.2] Install ingress-nginx
   command: helm install nginx-ingress nginx-stable/nginx-ingress
   remote_user: k8s
+  become: no
 
 # - name: Hetzner Cloud Container Storage Interface csidriver
 #   become: yes
