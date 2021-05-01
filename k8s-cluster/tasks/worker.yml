@@ -6,13 +6,19 @@
 
 - name: Creating a file with static network content
   copy:
-    dest: "/etc/network/interfaces.d/60-floating-ip.cfg"
+    dest: "/etc/netplan/60-floating-ip.yaml"
     content: |
-      auto eth0:1
-      iface eth0:1 inet static
-        address {{ float_ip_addr }}
-        netmask 32
-  when: float_ip_addr is defined
+      network:
+          version: 2
+          ethernets:
+              eth0:
+                  addresses:
+                  - {{float_ip_addr}}/32
+  when: float_ip_addr is defined and inventory_hostname in groups['k8s-nodes']
+
+- name: Apply netplan
+  command: sudo netplan apply
+  when: float_ip_addr is defined and inventory_hostname in groups['k8s-nodes']
   
 - name: "Add K8S Join command to dummy host"
   add_host:
