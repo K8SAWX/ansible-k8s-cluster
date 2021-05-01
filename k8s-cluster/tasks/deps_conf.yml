@@ -8,6 +8,7 @@
     line: 'k8s ALL=(ALL) NOPASSWD: ALL'
     validate: 'visudo -cf %s'
 
+
 - name: Update and upgrade apt packages
   become: true
   apt:

@@ -4,6 +4,16 @@
   register: join_command_raw
   when: inventory_hostname in groups['k8s-masters']
 
+- name: Creating a file with static network content
+  copy:
+    dest: "/etc/network/interfaces.d/60-floating-ip.cfg"
+    content: |
+      auto eth0:1
+      iface eth0:1 inet static
+        address {{ float_ip_addr }}
+        netmask 32
+  when: float_ip_addr is defined
+  
 - name: "Add K8S Join command to dummy host"
   add_host:
     name:   "K8S_JOIN_COMMAND"
