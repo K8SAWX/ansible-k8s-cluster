@@ -1,4 +1,6 @@
 ---
+- name: create the 'k8s' user
+  user: name=k8s append=yes state=present createhome=yes shell=/bin/bash
 
 - name: allow 'k8s' to have passwordless sudo
   lineinfile:
@@ -11,17 +13,6 @@
   apt:
     update_cache: yes
     upgrade: 'yes'
-
-# - name: Remove swapfile from /etc/fstab
-#   mount:
-#     name: "{{ item }}"
-#     fstype: swap
-#     state: absent
-#   with_items:
-#     - swap
-#     - none
-
-
 
 - name: Install packages that allow apt to be used over HTTPS
   apt:
@@ -61,8 +52,6 @@
   become: yes
   shell: wget https://packages.cloud.google.com/apt/doc/apt-key.gpg && apt-key add apt-key.gpg
 
-
-
 - name: Adding apt repository for Kubernetes
   apt_repository:
     repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
@@ -90,7 +79,6 @@
     regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
     replace: '# \1'
 
-
 - name: Create a directory for kubelet if it does not exist
   ansible.builtin.file:
     path: /etc/systemd/system/kubelet.service.d/
@@ -103,7 +91,6 @@
     state: directory
     mode: '0755'
 
-   
 - name: Creating a file with content
   copy:
     dest: "/etc/systemd/system/kubelet.service.d/20-hetzner-cloud.conf"
