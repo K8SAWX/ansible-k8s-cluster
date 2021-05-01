@@ -74,9 +74,13 @@
 
 - name: Step[1.0] Install ingress-nginx
   command: helm repo add nginx-stable https://helm.nginx.com/stable
+  remote_user: k8s
+  become: no
 
 - name: Step[1.1] Install ingress-nginx
   command: helm repo update
+  remote_user: k8s
+  become: no
 
 - name: Step[1.2] Install ingress-nginx
   command: helm install nginx-ingress nginx-stable/nginx-ingress
