@@ -72,6 +72,15 @@
   become_user: k8s
   shell: kubectl -n kube-system patch deployment coredns --type json -p '[{"op":"add","path":"/spec/template/spec/tolerations/-","value":{"key":"node.cloudprovider.kubernetes.io/uninitialized","value":"true","effect":"NoSchedule"}}]'
 
+- name: Step[1.0] Install ingress-nginx
+  command: helm repo add nginx-stable https://helm.nginx.com/stable
+
+- name: Step[1.1] Install ingress-nginx
+  command: helm repo update
+
+- name: Step[1.2] Install ingress-nginx
+  command: helm install nginx-ingress nginx-stable/nginx-ingress
+
 # - name: Hetzner Cloud Container Storage Interface csidriver
 #   become: yes
 #   become_user: k8s
