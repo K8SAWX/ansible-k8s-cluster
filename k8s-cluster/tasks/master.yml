@@ -36,10 +36,10 @@
     chdir: $HOME
     creates: pod_network_setup.txt
 
-- name: Install Hetzner Controller Manager
-  become: yes
-  become_user: k8s
-  shell: kubectl apply -f https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/master/deploy/ccm-networks.yaml
+# - name: Install Hetzner Controller Manager
+#   become: yes
+#   become_user: k8s
+#   shell: kubectl apply -f https://raw.githubusercontent.com/hetznercloud/hcloud-cloud-controller-manager/master/deploy/ccm-networks.yaml
 
 - name: Copy k8s hetzner secret token
   template:
@@ -69,29 +69,29 @@
   become_user: k8s
   shell: kubectl -n kube-system patch deployment coredns --type json -p '[{"op":"add","path":"/spec/template/spec/tolerations/-","value":{"key":"node.cloudprovider.kubernetes.io/uninitialized","value":"true","effect":"NoSchedule"}}]'
 
-- name: Hetzner Cloud Container Storage Interface csidriver
-  become: yes
-  become_user: k8s
-  shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/csi-api/release-1.14/pkg/crd/manifests/csidriver.yaml
+# - name: Hetzner Cloud Container Storage Interface csidriver
+#   become: yes
+#   become_user: k8s
+#   shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/csi-api/release-1.14/pkg/crd/manifests/csidriver.yaml
 
-- name: Hetzner Cloud Container Storage Interface csinodeinfo
-  become: yes
-  become_user: k8s
-  shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/csi-api/release-1.14/pkg/crd/manifests/csinodeinfo.yaml
+# - name: Hetzner Cloud Container Storage Interface csinodeinfo
+#   become: yes
+#   become_user: k8s
+#   shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/csi-api/release-1.14/pkg/crd/manifests/csinodeinfo.yaml
 
-- name: Hetzner Cloud Container Storage Interface hcloud-csi 
-  become: yes
-  become_user: k8s
-  shell: kubectl apply -f https://raw.githubusercontent.com/hetznercloud/csi-driver/master/deploy/kubernetes/hcloud-csi.yml
+# - name: Hetzner Cloud Container Storage Interface hcloud-csi 
+#   become: yes
+#   become_user: k8s
+#   shell: kubectl apply -f https://raw.githubusercontent.com/hetznercloud/csi-driver/master/deploy/kubernetes/hcloud-csi.yml
 
-- name: Copy ingress config file
-  template:
-    src: templates/ingress_config.yml
-    dest: $HOME/cluster_config/ingress_config.yml
-  become_user: k8s
+# - name: Copy ingress config file
+#   template:
+#     src: templates/ingress_config.yml
+#     dest: $HOME/cluster_config/ingress_config.yml
+#   become_user: k8s
 
-- name: Apply ingress config
-  become: yes
-  become_user: k8s
-  shell: kubectl apply -f $HOME/cluster_config/ingress_config.yml
+# - name: Apply ingress config
+#   become: yes
+#   become_user: k8s
+#   shell: kubectl apply -f $HOME/cluster_config/ingress_config.yml
 
