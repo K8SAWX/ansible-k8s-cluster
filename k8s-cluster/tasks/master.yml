@@ -1,6 +1,6 @@
 ---
 - name: initialize the cluster
-  shell: kubeadm init --pod-network-cidr=10.244.0.0/16  --node-name k8s-master --apiserver-cert-extra-sans=10.0.0.0 >> cluster_initialized.txt
+  shell: kubeadm init --pod-network-cidr=10.244.0.0/16  --node-name k8s-master --ignore-preflight-errors=NumCPU --apiserver-cert-extra-sans=10.0.0.0 >> cluster_initialized.txt
   args:
     chdir: $HOME
     creates: cluster_initialized.txt
@@ -36,29 +36,6 @@
     chdir: $HOME
     creates: pod_network_setup.txt
 
-
-
-- name: Copy k8s hetzner secret token
-  template:
-    src: templates/k8s-secret-cluster.yml
-    dest: $HOME/cluster_config/k8s-secret-cluster.yml
-  become_user: k8s
-
-- name: Install helm[1.0]
-  command: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 
-
-- name: Install helm[1.1]
-  command: chmod 700 get_helm.sh
-
-- name: Install helm[1.2]
-  command: ./get_helm.sh
-
-- name: Create inside k8s cluster the hetzner secret token
-  become: yes
-  become_user: k8s
-  shell: kubectl apply -f $HOME/cluster_config/k8s-secret-cluster.yml
-
-
 - name: Patch daemonset for kube-flannel
   become: yes
   become_user: k8s
@@ -69,32 +46,69 @@
   become_user: k8s
   shell: kubectl -n kube-system patch deployment coredns --type json -p '[{"op":"add","path":"/spec/template/spec/tolerations/-","value":{"key":"node.cloudprovider.kubernetes.io/uninitialized","value":"true","effect":"NoSchedule"}}]'
 
-- name: Step[1.0] Install ingress-nginx
-  command: helm repo add nginx-stable https://helm.nginx.com/stable
-  remote_user: k8s
-  become: no
+- name: Copy k8s hetzner secret token
+  template:
+    src: templates/k8s-secret-cluster.yml
+    dest: $HOME/cluster_config/k8s-secret-cluster.yml
+  become_user: k8s
 
-- name: Step[1.1] Install ingress-nginx
-  command: helm repo update
-  remote_user: k8s
-  become: no
-
-- name: Step[1.2] Install ingress-nginx
-  command: helm install nginx-ingress nginx-stable/nginx-ingress
-  remote_user: k8s
-  become: no
-
-- name: Hetzner Cloud Container Storage Interface csidriver
+- name: Apply hetzner secret token
   become: yes
   become_user: k8s
-  shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/csi-api/release-1.14/pkg/crd/manifests/csidriver.yaml
+  shell: kubectl apply -f $HOME/cluster_config/k8s-secret-cluster.yml
 
-- name: Hetzner Cloud Container Storage Interface csinodeinfo
-  become: yes
-  become_user: k8s
-  shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/csi-api/release-1.14/pkg/crd/manifests/csinodeinfo.yaml
+# - name: Hetzner Cloud Controller Manager
+#   become: yes
+#   become_user: k8s
+#   shell: kubectl apply -f https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm-networks.yaml
 
-- name: Hetzner Cloud Container Storage Interface hcloud-csi 
-  become: yes
-  become_user: k8s
-  shell: kubectl apply -f https://raw.githubusercontent.com/hetznercloud/csi-driver/master/deploy/kubernetes/hcloud-csi.yml
+# - name: Hetzner Cloud Container Storage Interface csidriver
+#   become: yes
+#   become_user: k8s
+#   shell: kubectl delete -f https://raw.githubusercontent.com/kubernetes/csi-api/release-1.14/pkg/crd/manifests/csidriver.yaml
+
+# - name: Hetzner Cloud Container Storage Interface csinodeinfo
+#   become: yes
+#   become_user: k8s
+#   shell: kubectl delete -f https://raw.githubusercontent.com/kubernetes/csi-api/release-1.14/pkg/crd/manifests/csinodeinfo.yaml
+
+# - name: Hetzner Cloud Container Storage Interface hcloud-csi 
+#   become: yes
+#   become_user: k8s
+#   shell: kubectl delete -f https://raw.githubusercontent.com/hetznercloud/csi-driver/master/deploy/kubernetes/hcloud-csi.yml
+
+- name: Install helm[1.0]
+  command: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 
+
+- name: Install helm[1.1]
+  command: chmod 700 get_helm.sh
+
+- name: Install helm[1.2]
+  command: ./get_helm.sh
+
+# - name: Step[1.0] Install ingress-nginx
+#   command: helm repo add nginx-stable https://helm.nginx.com/stable
+#   become: yes
+#   become_user: k8s
+
+# - name: Step[1.1] Install ingress-nginx
+#   command: helm repo update
+#   become: yes
+#   become_user: k8s
+
+# - name: Step[1.2] Install ingress-nginx
+#   command: helm install nginx-ingress nginx-stable/nginx-ingress
+#   become: yes
+#   become_user: k8s
+
+# - name: Path the ingress remote IP
+#   command: |
+#     kubectl patch svc nginx-ingress-nginx-ingress -p '{"spec": {"type": "LoadBalancer", "externalIPs":["{{hostvars['localhost']['remote_float_ip']}}"]}}'
+#   become: yes
+#   become_user: k8s
+#   when: hostvars['localhost']['remote_float_ip'] is defined
+
+# - name: Path the ingress remote IP
+#   command: kubectl annotate svc nginx-ingress-nginx-ingress load-balancer.hetzner.cloud/location=hel1
+#   become: yes
+#   become_user: k8s

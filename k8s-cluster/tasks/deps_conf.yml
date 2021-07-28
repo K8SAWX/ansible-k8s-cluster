@@ -9,6 +9,17 @@
     validate: 'visudo -cf %s'
 
 
+- name: Change various sysctl-settings
+  sysctl:
+    name: '{{ item.key }}'
+    value: '{{ item.value }}'
+    sysctl_set: yes
+    state: present
+    reload: yes
+    ignoreerrors: yes
+  with_dict: '{{ sysctl_config }}'
+    
+
 - name: Update and upgrade apt packages
   become: true
   apt:
@@ -80,24 +91,18 @@
     regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
     replace: '# \1'
 
-- name: Create a directory for kubelet if it does not exist
-  ansible.builtin.file:
-    path: /etc/systemd/system/kubelet.service.d/
-    state: directory
-    mode: '0755'
+# - name: Create a directory for kubelet if it does not exist
+#   ansible.builtin.file:
+#     path: /etc/systemd/system/kubelet.service.d/
+#     state: directory
+#     mode: '0755'
 
-- name: Create a directory for static ip address if it does not exist
-  ansible.builtin.file:
-    path: /etc/network/interfaces.d/
-    state: directory
-    mode: '0755'
-
-- name: Creating a file with content
-  copy:
-    dest: "/etc/systemd/system/kubelet.service.d/20-hetzner-cloud.conf"
-    content: |
-      [Service]
-      Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external"
+# - name: Creating a file with content
+#   copy:
+#     dest: "/etc/systemd/system/kubelet.service.d/20-hetzner-cloud.conf"
+#     content: |
+#       [Service]
+#       Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external"
 
 - name: Create a directory for kubelet if it does not exist
   ansible.builtin.file:

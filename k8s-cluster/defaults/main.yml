@@ -1,3 +1,9 @@
 ---
 # defaults file for k8s-cluster
 hcloud_api_url: "https://api.hetzner.cloud/v1/"
+sysctl_config:
+  net.bridge.bridge-nf-call-iptables: 1
+  net.ipv4.conf.all.forwarding: 1
+  net.ipv6.conf.all.forwarding: 1
+  net.ipv4.ip_forward: 1
+  net.ipv6.conf.default.forwarding: 1

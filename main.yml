@@ -1,4 +1,13 @@
 ---
+
+# - name: Check hetzner token, network name and float ip name
+#   hosts: 127.0.0.1
+#   connection: local
+#   tasks:
+#     - include_role:
+#         name: k8s-cluster
+#         tasks_from: checks
+
 - name: use k8s-cluster
   hosts: all
   become: true
