@@ -1,25 +1,8 @@
-
 - name: get join command
   shell: kubeadm token create --print-join-command
   register: join_command_raw
   when: inventory_hostname in groups['k8s-masters']
-
-- name: Creating a file with static network content
-  copy:
-    dest: "/etc/netplan/60-floating-ip.yaml"
-    content: |
-      network:
-          version: 2
-          ethernets:
-              eth0:
-                  addresses:
-                  - {{float_ip_addr}}/32
-  when: float_ip_addr is defined and inventory_hostname in groups['k8s-nodes']
-
-- name: Apply netplan
-  command: sudo netplan apply
-  when: float_ip_addr is defined and inventory_hostname in groups['k8s-nodes']
-  
+ 
 - name: "Add K8S Join command to dummy host"
   add_host:
     name:   "K8S_JOIN_COMMAND"
@@ -31,4 +14,7 @@
   args:
     chdir: $HOME
     creates: node_joined.txt
-  when: inventory_hostname in groups['k8s-nodes']
+  when: inventory_hostname in groups['k8s-workers']
+
+
+# alias ar='ansible-playbook -i hosts main.yml --extra-vars "hcloud_token=SIDZuxTmWDNFyx9jSiG065WibX3pu74ppBu2LdbGQ5iBt87AQkv0pHICOBVawmLJ hcloud_private_network=k8s-network float_ip_addr=116.203.10.253"'

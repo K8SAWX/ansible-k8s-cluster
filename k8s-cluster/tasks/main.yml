@@ -3,13 +3,14 @@
 - name: Setup all masters and nodes
   include_role:
     name: k8s-cluster
-    tasks_from: checks
-
-- name: Setup all masters and nodes
-  include_role:
-    name: k8s-cluster
     tasks_from: deps_conf
 
+# - name: Static IP configuration
+#   include_role:
+#     name: k8s-cluster
+#     tasks_from: float_ip
+#   when: hostvars['localhost']['remote_float_ip'] is defined  and inventory_hostname in groups['k8s-workers']
+  
 - name: Setup masters
   include_role:
     name: k8s-cluster

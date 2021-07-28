@@ -1,0 +1,22 @@
+---
+- name: Show floating ip address
+  debug:
+    msg: "Remote ingress address is: {{hostvars['localhost']['remote_float_ip']}}"
+  when: hostvars['localhost']['remote_float_ip'] != None 
+
+- name: Add the network configuration for static ip addr
+  copy:
+    dest: "/etc/netplan/60-floating-ip.yaml"
+    content: |
+      network:
+        version: 2
+        ethernets:
+          eth0:
+            addresses:
+            - {{hostvars['localhost']['remote_float_ip']}}/32
+  when: hostvars['localhost']['remote_float_ip'] is defined 
+
+- name: Restarting Network to take effect new IP Address
+  command: netplan apply
+  become: yes
+  when: hostvars['localhost']['remote_float_ip'] is defined 
