@@ -116,7 +116,7 @@
     content: |
       [Service]
       ExecStart=
-      ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock --exec-opt native.cgroupdriver=systemd
+      ExecStart=/usr/bin/dockerd
 
 - name: Reload service daemon-reload
   ansible.builtin.systemd:
