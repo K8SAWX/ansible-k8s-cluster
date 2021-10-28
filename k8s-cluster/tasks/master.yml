@@ -4,6 +4,8 @@
   args:
     chdir: $HOME
     creates: cluster_initialized.txt
+  become: yes
+  become_user: k8s
 
 - name: create .kube directory
   become: yes
