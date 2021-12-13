@@ -15,6 +15,3 @@
     chdir: $HOME
     creates: node_joined.txt
   when: inventory_hostname in groups['k8s-workers']
-
-
-# alias ar='ansible-playbook -i hosts main.yml --extra-vars "hcloud_token=SIDZuxTmWDNFyx9jSiG065WibX3pu74ppBu2LdbGQ5iBt87AQkv0pHICOBVawmLJ hcloud_private_network=k8s-network float_ip_addr=116.203.10.253"'

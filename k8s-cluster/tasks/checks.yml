@@ -31,27 +31,8 @@
       Authorization: "Bearer {{ hcloud_token }}"
   register: hcloud_network_check_request
 
-- name: Check if the hetzner float ip is valid
+- name: Check if the hetzner network name is valid
   fail:
     msg: "The private network({{hcloud_private_network}}) not found in hetzner cloud"
   failed_when: "hcloud_network_check_request.json.networks |  selectattr('name', 'search', hcloud_private_network) | list | length == 0"
       
-- name: Get the floatings IP's from hetzner API
-  uri:
-    url: "{{ hcloud_api_url }}floating_ips"
-    method: GET
-    headers:
-      Content-Type: application/json
-      Authorization: "Bearer {{ hcloud_token }}"
-  register: hcloud_float_ip_request
-  when: float_ip_name is defined 
-
-- name: Check if the hetzner float ip is valid
-  debug:
-    msg: No float ip was defined, using load balancer as default ingress ip
-  when: hcloud_float_ip_request.json.floating_ips |  selectattr('name', 'search', float_ip_name) | list | length == 0
-
-- name: Store float ip address
-  set_fact:
-    remote_float_ip: "{{(hcloud_float_ip_request.json.floating_ips |  selectattr('name', 'search', float_ip_name) | list | first).ip}}"
-  when: hcloud_float_ip_request.json.floating_ips |  selectattr('name', 'search', float_ip_name) | list | length > 0

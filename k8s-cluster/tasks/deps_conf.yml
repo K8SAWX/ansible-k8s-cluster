@@ -1,129 +1,157 @@
 ---
-- name: create the 'k8s' user
-  user: name=k8s append=yes state=present createhome=yes shell=/bin/bash
+- block:
+    - name: allow 'k8s' to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        line: 'k8s ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+        
+    - name: Check if sysctl kubernetes config file exist
+      file:
+        path: /etc/sysctl.d/99-kubernetes-cri.conf
+        state: touch
 
-- name: allow 'k8s' to have passwordless sudo
-  lineinfile:
-    dest: /etc/sudoers
-    line: 'k8s ALL=(ALL) NOPASSWD: ALL'
-    validate: 'visudo -cf %s'
+    - name: Add overlay and br_netfilter modules
+      modprobe:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - overlay
+        - br_netfilter
+
+    - name: Change various sysctl-settings
+      sysctl:
+        name: '{{ item.key }}'
+        value: '{{ item.value }}'
+        sysctl_set: yes
+        state: present
+        reload: yes
+        ignoreerrors: no
+        sysctl_file: "/etc/sysctl.d/99-kubernetes-cri.conf"
+      with_dict: '{{ sysctl_config }}'
+        
+    - name: Update and upgrade apt packages
+      become: true
+      apt:
+        update_cache: yes
+        upgrade: 'yes'
+
+    - name: Install packages that allow apt to be used over HTTPS
+      apt:
+        name: "{{ packages }}"
+        state: present
+        update_cache: yes
+      vars:
+        packages:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg-agent
+        - software-properties-common
+
+    - name: Install containerd
+      apt: 
+        name: "{{ packages }}"
+        state: present
+        update_cache: yes
+      vars:
+        packages:
+        - containerd
+    - name: Add an apt signing key for Kubernet
+      ansible.builtin.apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    - name: Adding apt repository for Kubernetes
+      apt_repository:
+        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+        filename: kubernetes.list
+
+    - name: Install Kubernetes binaries
+      apt: 
+        name: "{{ packages }}"
+        state: present
+        update_cache: yes
+      vars:
+        packages:
+          - kubelet=1.22.3-00 
+          - kubeadm=1.22.3-00
+          - kubectl=1.22.3-00
+
+    - name: Disable SWAP since kubernetes can't work with swap enabled (1/2)
+      shell: |
+        swapoff -a
+
+    - name: Disable SWAP in fstab since kubernetes can't work with swap enabled (2/2)
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+
+    - name: Create the containerd config dir
+      file:
+        path: '/etc/containerd'
+        state: directory
+
+    - name: Getting the default containerd config
+      shell: containerd config default
+      register: containerd_output
+
+    - name: Copy the default containerd config
+      copy:
+        content: "{{ containerd_output.stdout }}"
+        dest: "/etc/containerd/config.toml"
+
+    - name: Create a directory for kubelet if it does not exist
+      ansible.builtin.file:
+        path: /etc/systemd/system/kubelet.service.d/
+        state: directory
+        mode: '0755'
+
+    - name: Creating a file with content
+      copy:
+        dest: "/etc/systemd/system/kubelet.service.d/20-hetzner-cloud.conf"
+        content: |
+          [Service]
+          Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external"
+
+    - name: Reload service daemon-reload
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Restart containerd
+      service:
+        name: kubelet
+        daemon_reload: yes
+        state: restarted
 
 
-- name: Change various sysctl-settings
-  sysctl:
-    name: '{{ item.key }}'
-    value: '{{ item.value }}'
-    sysctl_set: yes
-    state: present
-    reload: yes
-    ignoreerrors: yes
-  with_dict: '{{ sysctl_config }}'
-    
+# - block:
+#     - name: Enable ufw
+#       ufw: 
+#         state: enabled
+#       become: yes
 
-- name: Update and upgrade apt packages
-  become: true
-  apt:
-    update_cache: yes
-    upgrade: 'yes'
+#     - name: Allow OpenSSH
+#       ufw:
+#         rule: allow
+#         port: "22"
+#       become: yes
+#     - name: Allow Private Network to acces on port 80 and 443
+#       ufw:
+#         rule: allow
+#         src: '{{ item }}'
+#       loop:
+#         - 10.0.0.0/16
 
-- name: Install packages that allow apt to be used over HTTPS
-  apt:
-    name: "{{ packages }}"
-    state: present
-    update_cache: yes
-  vars:
-    packages:
-    - apt-transport-https
-    - ca-certificates
-    - curl
-    - gnupg-agent
-    - software-properties-common
-
-- name: Add an apt signing key for Docker
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    state: present
-
-- name: Add apt repository for stable version
-  apt_repository:
-    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
-    state: present
-
-- name: Install docker and its dependecies
-  apt: 
-    name: "{{ packages }}"
-    state: present
-    update_cache: yes
-  vars:
-    packages:
-    - docker-ce 
-    - docker-ce-cli 
-    - containerd.io
-
-- name: Add an apt signing key for Kubernetes
-  become: yes
-  shell: wget https://packages.cloud.google.com/apt/doc/apt-key.gpg && apt-key add apt-key.gpg
-
-- name: Adding apt repository for Kubernetes
-  apt_repository:
-    repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
-    state: present
-    filename: kubernetes.list
-
-- name: Install Kubernetes binaries
-  apt: 
-    name: "{{ packages }}"
-    state: present
-    update_cache: yes
-  vars:
-    packages:
-      - kubelet 
-      - kubeadm 
-      - kubectl
-
-- name: Disable SWAP since kubernetes can't work with swap enabled (1/2)
-  shell: |
-    swapoff -a
-
-- name: Disable SWAP in fstab since kubernetes can't work with swap enabled (2/2)
-  replace:
-    path: /etc/fstab
-    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
-    replace: '# \1'
-
-# - name: Create a directory for kubelet if it does not exist
-#   ansible.builtin.file:
-#     path: /etc/systemd/system/kubelet.service.d/
-#     state: directory
-#     mode: '0755'
-
-# - name: Creating a file with content
-#   copy:
-#     dest: "/etc/systemd/system/kubelet.service.d/20-hetzner-cloud.conf"
-#     content: |
-#       [Service]
-#       Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external"
-
-- name: Create a directory for kubelet if it does not exist
-  ansible.builtin.file:
-    path: /etc/systemd/system/docker.service.d/
-    state: directory
-    mode: '0755'
-
-- name: Creating a file with content
-  copy:
-    dest: "/etc/systemd/system/docker.service.d/00-cgroup-systemd.conf"
-    content: |
-      [Service]
-      ExecStart=
-      ExecStart=/usr/bin/dockerd
-
-- name: Reload service daemon-reload
-  ansible.builtin.systemd:
-    daemon_reload: yes
-
-- name: Restart kubelet
-  service:
-    name: kubelet
-    daemon_reload: yes
-    state: restarted
+#     - name: Deny acces on port 80 and 443 on each worker node
+#       ufw:
+#         rule: deny
+#         port: "{{ item }}"
+#         src:  "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+#       loop:
+#         - "80"
+#         - "443"
+#       become: yes
+#   when: inventory_hostname in groups['k8s-workers']

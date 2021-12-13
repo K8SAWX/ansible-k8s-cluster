@@ -1,23 +1,19 @@
----
+- hosts: 127.0.0.1
+  tasks:
+    - name: Check the hetzner token and network...
+      import_tasks: checks.yaml
 
-- name: Setup all masters and nodes
-  include_role:
-    name: k8s-cluster
-    tasks_from: deps_conf
+    # - name: Confirm the ssh keys
+    #   import_tasks: ssh_keys_validation.yml
 
-# - name: Static IP configuration
-#   include_role:
-#     name: k8s-cluster
-#     tasks_from: float_ip
-#   when: hostvars['localhost']['remote_float_ip'] is defined  and inventory_hostname in groups['k8s-workers']
-  
-- name: Setup masters
-  include_role:
-    name: k8s-cluster
-    tasks_from: master
-  when: inventory_hostname in groups['k8s-masters']
+- hosts: all
+  tasks:
+    - name: Install the system dependency
+      import_tasks: deps_conf.yml
 
-- name: Join nodes
-  include_role:
-    name: k8s-cluster
-    tasks_from: worker
+    - name: Init the cluster and setup the master node
+      import_tasks: master.yml
+      when: inventory_hostname in groups['k8s-masters']
+    
+    - name: Join the nodes
+      import_tasks: worker.yml

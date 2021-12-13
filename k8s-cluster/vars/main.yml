@@ -1,5 +1,5 @@
 ---
-# vars file for k8s-cluster
+# Hetzner vars
 hcloud_token: null
+# The name of the private network
 hcloud_private_network: null
-float_ip_addr: null
