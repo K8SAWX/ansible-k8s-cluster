@@ -1,0 +1,5 @@
+- name: Run role
+  hosts: all
+  become: yes
+  roles:
+    - "k8s-cluster"
