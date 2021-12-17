@@ -1,82 +1,84 @@
 ---
-- name: initialize the cluster
-  shell: sudo kubeadm init --pod-network-cidr=10.244.0.0/16  --node-name k8s-master --ignore-preflight-errors=NumCPU --apiserver-cert-extra-sans=10.0.0.0 >> cluster_initialized.txt
-  args:
-    chdir: $HOME
-    creates: cluster_initialized.txt
-  become: yes
-  become_user: k8s
+- block:
+  - name: initialize the cluster
+    shell: sudo kubeadm init --pod-network-cidr=10.244.0.0/16  --node-name k8s-master --ignore-preflight-errors=NumCPU --apiserver-cert-extra-sans=10.0.0.0 >> cluster_initialized.txt
+    args:
+      chdir: $HOME
+      creates: cluster_initialized.txt
+    become: yes
+    become_user: k8s
 
-- name: create .kube directory
-  become: yes
-  become_user: k8s
-  file:
-    path: $HOME/.kube
-    state: directory
-    mode: 0755
+  - name: create .kube directory
+    become: yes
+    become_user: k8s
+    file:
+      path: $HOME/.kube
+      state: directory
+      mode: 0755
 
-- name: create config directory
-  become: yes
-  become_user: k8s
-  file:
-    path: $HOME/cluster_config
-    state: directory
-    mode: 0755
+  - name: create config directory
+    become: yes
+    become_user: k8s
+    file:
+      path: $HOME/cluster_config
+      state: directory
+      mode: 0755
 
-- name: copy admin.conf to user's kube config
+  - name: copy admin.conf to user's kube config
 
-  copy:
-    src: /etc/kubernetes/admin.conf
-    dest: "/home/k8s/.kube/config"
-    remote_src: yes
-    owner: k8s
+    copy:
+      src: /etc/kubernetes/admin.conf
+      dest: "/home/k8s/.kube/config"
+      remote_src: yes
+      owner: k8s
 
-- name: install Pod network
-  become_user: k8s
-  shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.txt
-  args:
-    chdir: $HOME
-    creates: pod_network_setup.txt
+  - name: install Pod network
+    become_user: k8s
+    shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.txt
+    args:
+      chdir: $HOME
+      creates: pod_network_setup.txt
 
-- name: Patch daemonset for kube-flannel
-  become_user: k8s
-  shell: kubectl -n kube-system patch daemonset kube-flannel-ds --type json -p '[{"op":"add","path":"/spec/template/spec/tolerations/-","value":{"key":"node.cloudprovider.kubernetes.io/uninitialized","value":"true","effect":"NoSchedule"}}]'
+  - name: Patch daemonset for kube-flannel
+    become_user: k8s
+    shell: kubectl -n kube-system patch daemonset kube-flannel-ds --type json -p '[{"op":"add","path":"/spec/template/spec/tolerations/-","value":{"key":"node.cloudprovider.kubernetes.io/uninitialized","value":"true","effect":"NoSchedule"}}]'
 
-- name: Patch deployment for coredns
-  become_user: k8s
-  shell: kubectl -n kube-system patch deployment coredns --type json -p '[{"op":"add","path":"/spec/template/spec/tolerations/-","value":{"key":"node.cloudprovider.kubernetes.io/uninitialized","value":"true","effect":"NoSchedule"}}]'
+  - name: Patch deployment for coredns
+    become_user: k8s
+    shell: kubectl -n kube-system patch deployment coredns --type json -p '[{"op":"add","path":"/spec/template/spec/tolerations/-","value":{"key":"node.cloudprovider.kubernetes.io/uninitialized","value":"true","effect":"NoSchedule"}}]'
 
-- name: Copy k8s hetzner secret token
-  template:
-    src: templates/k8s-secret-cluster.yml
-    dest: $HOME/cluster_config/k8s-secret-cluster.yml
-  become_user: k8s
+  - name: Copy k8s hetzner secret token
+    template:
+      src: templates/k8s-secret-cluster.yml
+      dest: $HOME/cluster_config/k8s-secret-cluster.yml
+    become_user: k8s
 
-- name: Apply hetzner secret token
-  become_user: k8s
-  shell: kubectl apply -f $HOME/cluster_config/k8s-secret-cluster.yml
+  - name: Apply hetzner secret token
+    become_user: k8s
+    shell: kubectl apply -f $HOME/cluster_config/k8s-secret-cluster.yml
 
-- name: Hetzner Cloud Controller Manager
-  become_user: k8s
-  shell: kubectl apply -f https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm-networks.yaml
+  - name: Hetzner Cloud Controller Manager
+    become_user: k8s
+    shell: kubectl apply -f https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm-networks.yaml
 
-- name: Install helm[1.0]
-  command: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 
+  - name: Install helm[1.0]
+    command: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 
 
-- name: Install helm[1.1]
-  command: chmod 700 get_helm.sh
+  - name: Install helm[1.1]
+    command: chmod 700 get_helm.sh
 
-- name: Install helm[1.2]
-  command: ./get_helm.sh
+  - name: Install helm[1.2]
+    command: ./get_helm.sh
 
-- name: Step[1.0] Install ingress-nginx
-  command: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-  become_user: k8s
+  - name: Step[1.0] Install ingress-nginx
+    command: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    become_user: k8s
 
-- name: Step[1.1] Install ingress-nginx
-  command: helm repo update
-  become_user: k8s
+  - name: Step[1.1] Install ingress-nginx
+    command: helm repo update
+    become_user: k8s
 
-# - name: Step[1.2] Install ingress-nginx
-#   command: helm install nginx-ingress nginx-stable/nginx-ingress
-#   become_user: k8s
+  # - name: Step[1.2] Install ingress-nginx
+  #   command: helm install nginx-ingress nginx-stable/nginx-ingress
+  #   become_user: k8s
+  when: inventory_hostname in groups['k8s-masters']

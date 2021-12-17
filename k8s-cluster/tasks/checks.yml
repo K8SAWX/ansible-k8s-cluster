@@ -1,38 +1,39 @@
 ---
+- block:
+    - fail: msg="The hcloud_token var is not defined"
+      failed_when: hcloud_token == None
 
-- fail: msg="The hcloud_token var is not defined"
-  failed_when: hcloud_token == None
+    - fail: msg="The hcloud_private_network var is not defined"
+      failed_when: hcloud_private_network == None
 
-- fail: msg="The hcloud_private_network var is not defined"
-  failed_when: hcloud_private_network == None
-
-- name: Make a test request to hetzner API to check if the token is valid
-  uri:
-    url: "{{ hcloud_api_url }}servers"
-    method: GET
-    headers:
-      Content-Type: application/json
-      Authorization: "Bearer {{ hcloud_token }}"
-  register: hcloud_token_check_request
-  ignore_errors: True
-  no_log: True
-  
-- name: Check the request status
-  fail: 
-    msg: The hetzner cloud is not valid
-  failed_when: hcloud_token_check_request.status == 401
-
-- name: Get the networks from hetzner API
-  uri:
-    url: "{{ hcloud_api_url }}networks"
-    method: GET
-    headers:
-      Content-Type: application/json
-      Authorization: "Bearer {{ hcloud_token }}"
-  register: hcloud_network_check_request
-
-- name: Check if the hetzner network name is valid
-  fail:
-    msg: "The private network({{hcloud_private_network}}) not found in hetzner cloud"
-  failed_when: "hcloud_network_check_request.json.networks |  selectattr('name', 'search', hcloud_private_network) | list | length == 0"
+    - name: Make a test request to hetzner API to check if the token is valid
+      uri:
+        url: "{{ hcloud_api_url }}servers"
+        method: GET
+        headers:
+          Content-Type: application/json
+          Authorization: "Bearer {{ hcloud_token }}"
+      register: hcloud_token_check_request
+      ignore_errors: True
+      no_log: True
       
+    - name: Check the request status
+      fail: 
+        msg: The hetzner cloud token is not valid
+      failed_when: hcloud_token_check_request.status == 401
+
+    - name: Get the networks from hetzner API
+      uri:
+        url: "{{ hcloud_api_url }}networks"
+        method: GET
+        headers:
+          Content-Type: application/json
+          Authorization: "Bearer {{ hcloud_token }}"
+      register: hcloud_network_check_request
+
+    - name: Check if the hetzner network name is valid
+      fail:
+        msg: "The private network({{hcloud_private_network}}) not found in hetzner cloud"
+      failed_when: "hcloud_network_check_request.json.networks |  selectattr('name', 'search', hcloud_private_network) | list | length == 0"
+  delegate_to: localhost
+  run_once: yes

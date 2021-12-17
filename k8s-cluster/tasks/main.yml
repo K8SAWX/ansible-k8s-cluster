@@ -1,19 +1,16 @@
-- hosts: 127.0.0.1
-  tasks:
-    - name: Check the hetzner token and network...
-      import_tasks: checks.yaml
+---
+- import_tasks: "checks.yml"
+- import_tasks: "deps_conf.yml"
+- import_tasks: master.yml
+- import_tasks: worker.yml
+# - hosts: all
+#   tasks:
+#     - name: Install the system dependency
+#       import_tasks: deps_conf.yml
 
-    # - name: Confirm the ssh keys
-    #   import_tasks: ssh_keys_validation.yml
-
-- hosts: all
-  tasks:
-    - name: Install the system dependency
-      import_tasks: deps_conf.yml
-
-    - name: Init the cluster and setup the master node
-      import_tasks: master.yml
-      when: inventory_hostname in groups['k8s-masters']
+#     - name: Init the cluster and setup the master node
+#       
+#       when: inventory_hostname in groups['k8s-masters']
     
-    - name: Join the nodes
-      import_tasks: worker.yml
+#     - name: Join the nodes
+#       import_tasks: worker.yml
